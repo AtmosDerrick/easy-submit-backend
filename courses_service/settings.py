@@ -23,6 +23,16 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+STATIC_URL = '/static/'  # URL prefix for static files
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Where collected static files go
+
+# Additional locations of static files (optional)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Your project's static files
+]
+
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -30,9 +40,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-fnve1ud%j@ea_^^lu0!3p25wx24en_b)9#!0e!cvurd_^j+r!*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['165.232.62.234', 'localhost', '127.0.0.1']
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -67,6 +77,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'courses_service.urls'
@@ -163,3 +174,7 @@ SERVICE_CONFIG = {
     'NAME': os.getenv('SERVICE_NAME', 'courses-service'),
     'PORT': int(os.getenv('SERVICE_PORT', '8002')),
 }
+
+SECURE_BROWSER_XXSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
