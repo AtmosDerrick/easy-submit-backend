@@ -20,6 +20,7 @@ class Course(models.Model):
         related_name='courses'  # Better naming: department.courses.all()
     )
     name = models.CharField(max_length=200)
+    course_code_secret = models.CharField(max_length=100, default='', blank=True)  # Temporary field for course code generation
     course_code = models.CharField(max_length=10, unique=True)  
     head_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=True)
     academic_year = models.PositiveIntegerField(blank=False, null=False)

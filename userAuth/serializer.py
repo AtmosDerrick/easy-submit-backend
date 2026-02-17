@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import password_validation
 from users.models import User, UserProfile
+from django.contrib.auth import authenticate
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -45,19 +46,47 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        username_or_email = attrs.get('username')
+        password = attrs.get('password')
+        
+        if not username_or_email or not password:
+            raise serializers.ValidationError('Both username/email and password are required')
+        
+        user = None
+        
+        if '@' in username_or_email:
 
-        data['user'] = {
-            'id': self.user.id,
-            'username': self.user.username,
-            'email': self.user.email,
-            'is_premium': self.user.is_premium,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'is_verified': self.user.is_verified,
-            'phone_number': self.user.phone_number,
+            try:
+                user = User.objects.get(email=username_or_email)
+                user = authenticate(username=user.username, password=password)
+            except User.DoesNotExist:
+                user = None
+        else:
+            user = authenticate(username=username_or_email, password=password)
+        
+        if user is None:
+            raise serializers.ValidationError('Invalid credentials')
+        
+        if not user.is_active:
+            raise serializers.ValidationError('User account is disabled')
+        
+        refresh = self.get_token(user)
+        
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_premium': user.is_premium,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_verified': user.is_verified,
+                'phone_number': user.phone_number,
+            }
         }
-
+        
         return data
 
 

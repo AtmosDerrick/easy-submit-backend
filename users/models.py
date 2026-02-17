@@ -56,7 +56,6 @@ class UserProfile(models.Model):
     address = models.CharField(max_length=255, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
-    school = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         db_table = 'user_profile'
