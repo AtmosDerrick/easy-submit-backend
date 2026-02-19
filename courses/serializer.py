@@ -23,7 +23,7 @@ class CourseCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['school', 'department', 'name', 'academic_year', 'description', 'head_id','course_code_secret', 'created_by']  
+        fields = ['school', 'department', 'name', 'academic_year', 'description', 'head_id', 'created_by']  
     def create(self, validated_data):
        
         # Generate course code if not provided

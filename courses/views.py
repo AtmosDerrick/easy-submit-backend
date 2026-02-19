@@ -4,6 +4,10 @@ from rest_framework import status
 from .models import Course, Enrollment
 from .serializer import CourseSerializer, CourseCreateSerializer, EnrollmentSerializer, EnrollmentCreateSerializer
 from .services import CourseService
+import random
+import string
+
+
 
 
 
@@ -12,7 +16,6 @@ from .services import CourseService
 def createCourse(request):
     try:
         user = request.user
-
         
         if not user.is_authenticated:
             return Response(
@@ -20,7 +23,17 @@ def createCourse(request):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
-        serializer = CourseCreateSerializer(data=request.data, context={'request': request})
+        def generate_course_secret(length=6):
+            """Generate a random alphanumeric string of specified length"""
+            characters = string.ascii_uppercase + string.digits
+            return ''.join(random.choices(characters, k=length))
+        
+        course_secret = generate_course_secret()
+        
+        mutable_data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        mutable_data['course_code_secret'] = course_secret
+        
+        serializer = CourseCreateSerializer(data=mutable_data, context={'request': request})
 
         if not serializer.is_valid():
             return Response(
@@ -34,7 +47,9 @@ def createCourse(request):
         return Response({
             "message": "Course created successfully",
             "course_code": newCourse.course_code,
+            "course_secret": course_secret,  # Return the generated secret
             "created_by": user.id,
+            "created_by_name": f"{user.first_name} {user.last_name}".strip() or user.username,
             "course": CourseSerializer(newCourse).data
         }, status=status.HTTP_201_CREATED)
         
@@ -123,7 +138,6 @@ def search_course(request):
 
 @api_view(['POST'])
 def enrollment(request, course_id):
-   
     try:
         user = request.user
         
@@ -133,24 +147,34 @@ def enrollment(request, course_id):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
+        enrollment_key = request.data.get('enrollment_key')
+        
+        if not enrollment_key:
+            return Response({
+                "detail": "Enrollment key is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         course, error_response = CourseService.search_course_service(course_id=course_id)
-
-        print(course, "course")
         
         if error_response:
             return error_response
         
-        user_id = user.id
+        print(course.course_code_secret,"diff", enrollment_key)  # Debugging line
         
-        if Enrollment.objects.filter(course=course, user_id=user_id).exists():
+        if course.course_code_secret != enrollment_key:  
+            return Response({
+                "detail": "Invalid enrollment key. Please check with your instructor."
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if Enrollment.objects.filter(course=course, user=user).exists():
             return Response({
                 "detail": "You are already enrolled in this course."
             }, status=status.HTTP_400_BAD_REQUEST)
         
         new_enrollment = Enrollment.objects.create(
             course=course,
-            user_id=user_id,
-            status='active'  
+            user=user,
+            status='active'
         )
         
         return Response({
@@ -159,6 +183,7 @@ def enrollment(request, course_id):
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
+        print(f"Enrollment error: {str(e)}")  # For debugging
         return Response({
             "detail": "An error occurred while enrolling in this course.",
             "error": str(e)
