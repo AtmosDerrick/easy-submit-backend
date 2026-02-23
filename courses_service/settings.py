@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'courses',
     'users',
     'userAuth',
+    'submission',
 ]
 
 MIDDLEWARE = [    
@@ -173,3 +174,6 @@ SERVICE_CONFIG = {
     'NAME': os.getenv('SERVICE_NAME', 'courses-service'),
     'PORT': int(os.getenv('SERVICE_PORT', '8002')),
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

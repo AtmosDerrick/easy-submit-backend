@@ -7,12 +7,29 @@ import uuid
 
 
 class User(AbstractUser):
+    STUDENT = 'student'
+    TEACHER = 'teacher'
+    ADMIN = 'admin'
+    
+    ROLE_CHOICES = [
+        (STUDENT, 'Student'),
+        (TEACHER, 'Teacher'),
+        (ADMIN, 'Admin'),
+    ]
+
+
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    role = models.CharField(
+        max_length=100, 
+        choices=ROLE_CHOICES,
+        default=STUDENT
+    )
     is_premium = models.BooleanField(default=False)
     premium_expiry = models.DateTimeField(null=True, blank=True)
 
