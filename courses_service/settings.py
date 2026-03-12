@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+    'django_q',
     
 
     'school',
@@ -53,6 +54,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+Q_CLUSTER = {
+    'name': 'submission',
+    'workers': 2,           # parallel worker processes
+    'timeout': 90,          # task timeout in seconds
+    'retry': 120,           # retry failed tasks after this many seconds
+    'max_attempts': 3,      # give up after 3 failures
+    'django_redis': None,   # explicitly disable redis
+    'orm': 'default',       # use your Postgres DB as broker
+}
 
 ROOT_URLCONF = 'courses_service.urls'
 

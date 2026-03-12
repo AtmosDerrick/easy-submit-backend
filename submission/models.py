@@ -1,4 +1,3 @@
-# models.py
 from django.db import models
 import uuid
 from courses.models import Course
@@ -25,13 +24,17 @@ class Submission(models.Model):
     version = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
 
+    # Draft flag — True until student explicitly confirms the submission.
+    # Drafts are not visible to lecturers and can be withdrawn freely.
+    is_draft = models.BooleanField(default=True)
+
     # Local file storage
     file = models.FileField(upload_to=submission_upload_path)
     file_name = models.CharField(max_length=255)
     file_size = models.PositiveIntegerField(help_text="File size in bytes")
     file_type = models.CharField(max_length=100, help_text="MIME type")
 
-    # Automated scores
+    # Automated scores — populated immediately on draft creation
     plagiarism_score = models.FloatField(
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         null=True, blank=True,
@@ -51,12 +54,14 @@ class Submission(models.Model):
         unique_together = ['student', 'course', 'version']
         indexes = [
             models.Index(fields=['status']),
+            models.Index(fields=['is_draft']),
             models.Index(fields=['course', 'status']),
             models.Index(fields=['student', 'course']),
         ]
 
     def __str__(self):
-        return f"{self.student.get_full_name()} - {self.course.course_code} (v{self.version})"
+        draft_label = " [DRAFT]" if self.is_draft else ""
+        return f"{self.student.get_full_name()} - {self.course.course_code} (v{self.version}){draft_label}"
 
 
 class SubmissionReview(models.Model):

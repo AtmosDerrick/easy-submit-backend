@@ -194,6 +194,7 @@ def enrollment(request, course_id):
 def user_enrollments(request):
     try:
         user = request.user
+        print(user, "user")
         
         if not user.is_authenticated:
             return Response(

@@ -1,4 +1,3 @@
-# serializers.py
 from rest_framework import serializers
 from .models import Submission, SubmissionReview
 
@@ -29,14 +28,14 @@ class SubmissionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'course', 'course_name', 'course_code',
             'student', 'student_name', 'student_email',
-            'version', 'status', 'status_display',
+            'version', 'status', 'status_display', 'is_draft',
             'plagiarism_score', 'ai_score',
             'file', 'file_name', 'file_size', 'file_type',
             'submitted_at', 'updated_at',
             'reviews', 'latest_review'
         ]
         read_only_fields = [
-            'id', 'plagiarism_score', 'ai_score',
+            'id', 'plagiarism_score', 'ai_score', 'is_draft',
             'submitted_at', 'updated_at', 'version'
         ]
 
@@ -48,16 +47,19 @@ class SubmissionSerializer(serializers.ModelSerializer):
 class SubmissionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Submission
-        fields = ['course', 'file']  # Remove file_name, file_size, file_type
+        fields = ['course', 'file']
 
     def validate(self, data):
         request = self.context.get('request')
         user = request.user if request else None
 
         if user:
+            # Only block if a confirmed (non-draft) active submission exists.
+            # Drafts don't count — a student may abandon a draft and start fresh.
             pending_exists = Submission.objects.filter(
                 student=user,
                 course=data['course'],
+                is_draft=False,
                 status__in=[Submission.Status.PENDING, Submission.Status.UNDER_REVIEW]
             ).exists()
 
@@ -72,15 +74,13 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = request.user
 
-        # Extract file metadata automatically
         uploaded_file = validated_data['file']
-        file_name = uploaded_file.name
-        file_size = uploaded_file.size
-        file_type = uploaded_file.content_type  # e.g. 'application/pdf'
 
+        # Derive version from confirmed submissions only — drafts are discarded attempts
         latest = Submission.objects.filter(
             student=user,
-            course=validated_data['course']
+            course=validated_data['course'],
+            is_draft=False,
         ).order_by('-version').first()
 
         version = (latest.version + 1) if latest else 1
@@ -89,13 +89,15 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
             student=user,
             version=version,
             status=Submission.Status.PENDING,
-            file_name=file_name,
-            file_size=file_size,
-            file_type=file_type,
+            is_draft=True,                          # always starts as draft
+            file_name=uploaded_file.name,
+            file_size=uploaded_file.size,
+            file_type=uploaded_file.content_type,
             **validated_data
         )
 
         return submission
+
 
 class SubmissionUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -173,14 +175,14 @@ class SubmissionListSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
     course_name = serializers.CharField(source='course.name', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    # FIX: BooleanField with source='reviews.exists' does not work — use SerializerMethodField
     has_review = serializers.SerializerMethodField()
 
     class Meta:
         model = Submission
         fields = [
             'id', 'student_name', 'course_name', 'version',
-            'status', 'status_display', 'plagiarism_score', 'ai_score',
+            'status', 'status_display', 'is_draft',
+            'plagiarism_score', 'ai_score',
             'submitted_at', 'has_review'
         ]
 
