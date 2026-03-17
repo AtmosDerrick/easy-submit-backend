@@ -6,13 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 def score_submission(submission_id: str):
-    """
-    Simulates plagiarism and AI detection scoring for a submission.
-    Runs in a Django-Q2 background worker — never in the request cycle.
-
-    Replace the random values with real API calls when ready, 
-    everything else stays the same.
-    """
+    
+    
+    print("it get to run this")
     try:
         submission = Submission.objects.get(pk=submission_id)
     except Submission.DoesNotExist:

@@ -108,8 +108,7 @@ class SubmissionConfirmView(APIView):
             is_draft=True,
         )
 
-        # Guard: don't allow confirming before scoring has finished.
-        # This prevents a submission landing in a lecturer's queue with null scores.
+       
         if submission.plagiarism_score is None or submission.ai_score is None:
             return Response(
                 {"detail": "Scoring is still in progress. Please wait and try again."},
@@ -123,17 +122,9 @@ class SubmissionConfirmView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# ---------------------------------------------------------------------------
-# DELETE /submissions/<id>/
-# Step 2b — student withdraws draft before confirming.
-# ---------------------------------------------------------------------------
 
 class SubmissionWithdrawView(APIView):
-    """
-    Withdraws (deletes) a draft submission.
-    If the scoring task hasn't run yet it will exit cleanly — the task
-    checks for existence before doing any work.
-    """
+
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk, *args, **kwargs):
@@ -155,3 +146,22 @@ class SubmissionWithdrawView(APIView):
             {"detail": "Draft submission withdrawn successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )
+        
+
+class AllUserSubmissionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        if not student_only(request.user):
+            return Response(
+                {"detail": "Only students can view their submissions."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        submissions = Submission.objects.filter(
+            student=request.user,
+            is_draft=False,         # exclude drafts — they're not real submissions yet
+        ).select_related('course')  # avoid N+1 on course_name/course_code
+
+        serializer = SubmissionSerializer(submissions, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)

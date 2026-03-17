@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'users',
     'userAuth',
     'submission',
+    'lecturer',
 ]
 
 MIDDLEWARE = [    
