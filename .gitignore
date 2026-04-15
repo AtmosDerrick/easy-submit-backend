@@ -1,0 +1,62 @@
+# =====================
+# Python
+# =====================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pkl
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# =====================
+# Django
+# =====================
+*.log
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Django secret key / env files
+.env
+.env.*
+*.env
+
+# Migrations (optional - depends on team workflow)
+# Uncomment if you want to reset DB often in dev
+# */migrations/*.py
+# */migrations/*.pyc
+
+# =====================
+# IDE / Editor
+# =====================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# =====================
+# Testing / Coverage
+# =====================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =====================
+# Build / packaging
+# =====================
+dist/
+build/
+*.egg-info/
+
+# =====================
+# OS files
+# =====================
+Thumbs.db

@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+import dj_database_url
+
 
 
 
@@ -86,10 +88,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'courses_service.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR}/db.sqlite3',  # fallback for local development
+        conn_max_age=600,  # Optional: persistent connections
+        conn_health_checks=True,  # Optional: health checks
+    )
 }
 
 
