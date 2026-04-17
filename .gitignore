@@ -56,7 +56,10 @@ dist/
 build/
 *.egg-info/
 
+settings.py
+
 # =====================
 # OS files
 # =====================
 Thumbs.db
+
