@@ -28,6 +28,12 @@ static/
 .env.*
 *.env
 
+# Settings file (anywhere in project)
+**/settings.py
+
+# Local settings (common Django pattern)
+**/local_settings.py
+
 # Migrations (optional - depends on team workflow)
 # Uncomment if you want to reset DB often in dev
 # */migrations/*.py
@@ -56,10 +62,7 @@ dist/
 build/
 *.egg-info/
 
-settings.py
-
 # =====================
 # OS files
 # =====================
 Thumbs.db
-
