@@ -39,11 +39,19 @@ class SubmissionCreateView(APIView):
 
         course_id = request.data.get('course')
         if course_id:
-            Submission.objects.filter(
+            # CHANGE 1: Delete files from S3 before deleting old drafts
+            old_drafts = Submission.objects.filter(
                 student=request.user,
                 course_id=course_id,
                 is_draft=True,
-            ).delete()
+            )
+            
+            # Delete files from S3
+            for draft in old_drafts:
+                if draft.file:
+                    draft.file.delete(save=False)
+            
+            old_drafts.delete()
 
         serializer = SubmissionCreateSerializer(
             data=request.data,
@@ -95,7 +103,7 @@ class SubmissionConfirmView(APIView):
             )
 
         submission.is_draft = False
-        submission.status = Submission.Status.UNDER_REVIEW   # use the enum, not a raw string
+        submission.status = Submission.Status.UNDER_REVIEW
         submission.save(update_fields=['is_draft', 'status', 'updated_at'])       
         
 
@@ -116,7 +124,13 @@ class SubmissionWithdrawView(APIView):
         submission = get_object_or_404(
             Submission, pk=pk, student=request.user, is_draft=True,
         )
+        
+        # CHANGE 2: Delete file from S3 before deleting submission
+        if submission.file:
+            submission.file.delete(save=False)
+        
         submission.delete()
+        
         return Response(
             {"detail": "Draft submission withdrawn successfully."},
             status=status.HTTP_204_NO_CONTENT,
